@@ -5,7 +5,7 @@ project(MySFMLProject)
 set(CMAKE_CXX_STANDARD 17)
 
 # Check if SFML is already installed on the system
-find_package(SFML 2.5 COMPONENTS graphics window system audio)
+find_package(SFML 2.5 COMPONENTS graphics window system)
 find_package(OpenGL REQUIRED)
 
 if(NOT SFML_FOUND)
@@ -43,6 +43,7 @@ if(NOT glm_POPULATED)
     add_subdirectory(${glm_SOURCE_DIR} ${glm_BINARY_DIR})
 endif()
 
+
 # Add your project's source files here
 set(SOURCES
     src/cube.cpp
@@ -55,17 +56,19 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-
+    ${CMAKE_CURRENT_SOURCE_DIR}/glew/include
+    path/to/glew/include
 )
 
-# Link SFML libraries to your project
+# Link SFML and GLEW libraries to your project
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
     sfml-graphics
     sfml-window
-    sfml-system
+    #sfml-system
     glm
     OpenGL32
-    ${OPENGL_LIBRARIES}
-
+    #glew
+    ${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/Release/x64/glew32.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/glew/lib/Release/x64/glew32s.lib
 )
