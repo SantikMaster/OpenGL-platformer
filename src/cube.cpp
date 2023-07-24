@@ -103,6 +103,7 @@ void createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& i
     }
 }
 
+
 const char* vertexShaderSource = R"(
     #version 440 core
     layout (location = 0) in vec3 aPos;
@@ -111,16 +112,127 @@ const char* vertexShaderSource = R"(
     uniform mat4 uModel;
     uniform mat4 uView;
     uniform mat4 uProjection;
+    uniform float uRotationAngle;
 
     out vec3 FragNormal;
     out vec3 FragPos;
 
-    void main() {
+    void main() 
+{
+
         FragNormal = mat3(transpose(inverse(uModel))) * aNormal;
         FragPos = vec3(uModel * vec4(aPos, 1.0));
         gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
     }
-)";
+)";/*/**/
+/*
+const char* fragmentShaderSource = R"(
+#version 440 core
+
+in vec3 FragNormal;
+in vec3 FragPos;
+
+out vec4 FragColor;
+
+uniform vec3 uLightColor;
+uniform float uAmbientStrength;
+uniform float uDiffuseStrength;
+uniform float uRotationAngle; // Uniform to pass the rotation angle from the CPU
+
+void main() {
+    vec3 ambient = uAmbientStrength * uLightColor;
+
+    // Calculate the light direction in view space
+    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
+    lightDir = normalize(FragPos - lightDir);
+
+    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
+
+    // Increase the blue component of the light color to make it more blue
+    vec3 blueLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 0.2, uLightColor.z * 1.0);
+
+    vec3 diffuse = uDiffuseStrength * diff * blueLightColor * 1.5;
+
+    // Define the range for the white stripe along the Y-axis
+    float startY = -10.0; // Adjust the value based on the size of your sphere
+    float endY = 10.0;   // Adjust the value based on the size of your sphere
+
+    // Rotate the position of the fragment using the rotation angle
+    float rotationAngleRad = radians(uRotationAngle); // Convert the rotation angle to radians
+    float rotatedY = FragPos.y * cos(rotationAngleRad*10) - FragPos.x * sin(rotationAngleRad*10);
+    float rotatedX = FragPos.y * sin(rotationAngleRad*10) + FragPos.x * cos(rotationAngleRad*10);
+    vec3 rotatedPosition = vec3(rotatedX, rotatedY, FragPos.z);
+
+    // Check if the rotated fragment's position is within the range of the white stripe
+    if (rotatedPosition.y >= startY && rotatedPosition.y <= endY) {
+        vec3 norm = normalize(FragNormal);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = uDiffuseStrength * diff * uLightColor;
+        FragColor = vec4(ambient + diffuse, 1.0); // White color
+    }
+    else {
+        FragColor = vec4(ambient + diffuse, 1.0);
+    }
+})";/**/
+
+/*
+const char* fragmentShaderSource = R"(
+#version 440 core
+
+in vec3 FragNormal;
+in vec3 FragPos;
+
+out vec4 FragColor;
+
+uniform vec3 uLightColor;
+uniform float uAmbientStrength;
+uniform float uDiffuseStrength;
+uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
+uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
+uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
+
+void main() {
+    vec3 ambient = uAmbientStrength * uLightColor;
+
+    // Calculate the light direction in view space
+    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
+    lightDir = normalize(FragPos - lightDir);
+
+    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
+
+    // Increase the blue component of the light color to make it more blue
+    vec3 blueLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 0.2, uLightColor.z * 1.0);
+
+    vec3 diffuse = uDiffuseStrength * diff * blueLightColor * 1.5;
+
+    // Calculate the uniform rotation angle using the absolute value of uSphereRotation
+    float uniformRotationAngle = uRotationAngle * length(uSphereRotation);
+
+    // Rotate the fragment's position based on the sphere's rotation angle and axis
+    float cosAngle = cos(uniformRotationAngle);
+    float sinAngle = sin(uniformRotationAngle);
+    vec3 centerToFrag = FragPos - uSphereCenter;
+    vec3 rotatedPos = vec3(
+        cosAngle * centerToFrag.x - sinAngle * centerToFrag.y + uSphereCenter.x,
+        cosAngle * centerToFrag.y + sinAngle * centerToFrag.x + uSphereCenter.y,
+        centerToFrag.z + uSphereCenter.z
+    );
+
+    // Calculate the distance of the rotated position from the X-axis
+    float distanceFromXAxis = abs(rotatedPos.y - uSphereCenter.y);
+
+    // Define the width of the stripe
+    float stripeWidth = 5.0; // Adjust the value based on your desired width
+
+    // Check if the distance from the X-axis is less than or equal to the stripe width
+    if (distanceFromXAxis <= stripeWidth * 0.5) {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color for the stripe
+    } else {
+        FragColor = vec4(ambient + diffuse, 1.0);
+    }
+}
+)";/**/
+
 
 
 const char* fragmentShaderSource = R"(
@@ -131,49 +243,100 @@ in vec3 FragPos;
 
 out vec4 FragColor;
 
-uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 uniform float uAmbientStrength;
 uniform float uDiffuseStrength;
+uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
+uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
+uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
 
 void main() {
     vec3 ambient = uAmbientStrength * uLightColor;
 
-    vec3 norm = normalize(FragNormal);
-    vec3 lightDir = normalize(uLightDirection);
-    lightDir = vec3(0, 0, 1);
-    float diff = max(dot(norm, lightDir), 0.0);
-    
+    // Calculate the light direction in view space
+    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
+    lightDir = normalize(FragPos - lightDir);
+
+    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
+
     // Increase the blue component of the light color to make it more blue
     vec3 blueLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 0.2, uLightColor.z * 1.0);
-    
-    vec3 diffuse = uDiffuseStrength * diff * blueLightColor*1.5;
-    
-    // Define the range for the white stripe along the Y-axis
-    float startY = -10.0; // Adjust the value based on the size of your sphere
-    float endY = 10.0;   // Adjust the value based on the size of your sphere
 
-    // Check if the fragment's position is within the range of the white stripe
-    if (FragPos.y >= startY && FragPos.y <= endY) {
-        vec3 norm = normalize(FragNormal);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = uDiffuseStrength * diff * uLightColor;
-            FragColor = vec4(ambient + diffuse, 1.0); // White color
+    vec3 diffuse = uDiffuseStrength * diff * blueLightColor * 1.5;
+
+    // Calculate the uniform rotation angle using the absolute value of uSphereRotation
+    float uniformRotationAngle = uRotationAngle * length(uSphereRotation);
+
+    // Calculate the vector from the fragment's position to the sphere's center
+    vec3 centerToFrag = FragPos - uSphereCenter;
+
+    // Calculate the dot product between uSphereRotation and the vector to determine the rotation direction
+    float rotationDot = dot(normalize(uSphereRotation), normalize(centerToFrag));
+
+    // Adjust the rotation angle based on the rotation direction
+ 
+    float finalRotationAngle = uniformRotationAngle*sign(rotationDot);
+
+    // Rotate the fragment's position based on the sphere's rotation angle and axis
+    float cosAngle = cos(finalRotationAngle);
+    float sinAngle = sin(finalRotationAngle);
+/*    vec3 rotatedPos = vec3(
+        cosAngle * centerToFrag.x - sinAngle * centerToFrag.z + uSphereCenter.x,
+        FragPos.y,
+        sinAngle * centerToFrag.x + cosAngle * centerToFrag.z + uSphereCenter.z
+    );*/
+
+    vec3 rotatedPos = vec3(
+        cosAngle * centerToFrag.x - sinAngle * centerToFrag.y + uSphereCenter.x,
+        cosAngle * centerToFrag.y + sinAngle * centerToFrag.x + uSphereCenter.y,
+        centerToFrag.z + uSphereCenter.z
+    );
+
+    // Calculate the distance of the rotated position from the Y-axis
+    float distanceFromYAxis = abs(rotatedPos.x - uSphereCenter.x);
+
+    // Define the width of the stripe
+    float stripeWidth = 10.0; // Adjust the value based on your desired width
+
+    // Check if the distance from the Y-axis is less than or equal to the stripe width
+    if (distanceFromYAxis <= stripeWidth * 0.5) {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
     } else {
         FragColor = vec4(ambient + diffuse, 1.0);
     }
-})";
+}
+
+)";
+
+
 
 class Sphere {
 public:
     Sphere(float radius = 50.0f);
-    void render();
+    void render(Shader *shader);
 
+    void setRotationAngle(float angle);
+    void setPosition(const glm::vec3& position);
+
+    float rotationAngle;
+    glm::vec3 position;
 private:
     std::vector<Vertex> vertices;
+    std::vector<Vertex> NewVertices;
     std::vector<unsigned int> indices;
     GLuint VBO, EBO;
+    glm::mat4 modelMatrix;
+
+
 };
+
+void Sphere::setRotationAngle(float angle) {
+    rotationAngle = angle;
+}
+
+void Sphere::setPosition(const glm::vec3& pos) {
+    position = pos;
+}
 
 class Shader 
 {
@@ -193,8 +356,17 @@ private:
 
 Sphere::Sphere(float radius)
 {
-    createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
+    modelMatrix = glm::mat4(1.0f);
+    rotationAngle = 0;
+    position = glm::vec3(0, 0, 0);
 
+    createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
+    for (size_t i = 0; i < vertices.size(); ++i)
+    {
+        Vertex ver;
+        NewVertices.push_back(ver);
+        
+    }
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
@@ -204,14 +376,34 @@ Sphere::Sphere(float radius)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 }
 
-void Sphere::render() {
+void Sphere::render(Shader* shader)
+{
+
+
+    modelMatrix = glm::mat4(1.0f);
+
+    modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
+    modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), rotationAngle);
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereRotation"), 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, +10.0f)));
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, x)));
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normalX)));
 
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);/**/ 
 }
 
 Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource) {
@@ -271,20 +463,27 @@ GLuint Shader::getProgramID() const {
 class WorldManager
 {
     std::shared_ptr<Sphere> sphere;
+    std::shared_ptr<Sphere> sphere2;
 
 public:
     WorldManager();
-    void Draw();
+    void Draw(Shader* shader);
 };
 
 WorldManager::WorldManager()
 {
      sphere = std::make_shared<Sphere>(50.0f);
+     sphere2 = std::make_shared<Sphere>(50.0f);
+     sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
+     sphere2->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
 }
 
-void WorldManager::Draw()
+void WorldManager::Draw(Shader* shader)
 {
-    sphere->render();
+    sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
+
+    sphere->render(shader);
+    sphere2->render(shader);
 }
 
 class Engine
@@ -370,7 +569,7 @@ void Engine::Init()
 }
 void Engine::Update()
 {
-    // Rotate the sphere
+    // Rotate the camera
     static bool rotate = true;
     static float angle = 0;
 
@@ -378,17 +577,15 @@ void Engine::Update()
         angle = static_cast<float>(sf::Clock().getElapsedTime().asMicroseconds());
     }
 
-  //  viewMatrix = glm::rotate(viewMatrix, angle / 50, glm::vec3(1.0f, 0.0f, 0.0f));
-    viewMatrix = glm::rotate(viewMatrix, angle / 30, glm::vec3(0.0f, 1.0f, 0.0f));
-   // viewMatrix = glm::rotate(viewMatrix, angle/100, glm::vec3(0.0f, 0.0f, 1.0f));
-
-    glm::mat4 modelMatrix = glm::mat4(1.0f); // Identity matrix (no transformation for now)
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+  /**/ // glm::mat4 modelMatrix = glm::mat4(1.0f); // Identity matrix (no transformation for now)
+  //  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    glm::vec3 lightDirection(0.f, 1.f, 0.f); // Adjust light direction as needed
+    glm::vec3 lightDirection(0.f, 1.f, 0.f);
+    lightDirection = glm::mat3(viewMatrix) * lightDirection;
     glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
+
 
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // White light color
     glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
@@ -418,6 +615,7 @@ void Engine::ProcessEvents()
 }
 void Engine::Run()
 {
+    Window->setActive(true);
     while (Window->isOpen())
     {
         ProcessEvents();
@@ -425,7 +623,7 @@ void Engine::Run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader->use();
         Update();
-        World->Draw();
+        World->Draw(shader.get());
         Window->display();
     }
 }
