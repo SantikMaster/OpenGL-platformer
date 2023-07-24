@@ -308,9 +308,10 @@ public:
     Engine();
     ~Engine();
     void Update();
+    void ProcessEvents();
     void Run();
 
-    std::unique_ptr<sf::RenderWindow> App;
+    std::unique_ptr<sf::RenderWindow> Window;
     std::unique_ptr <Shader> shader;
     std::unique_ptr<WorldManager> World;
  
@@ -322,7 +323,7 @@ void Engine::Init()
     settings.majorVersion = 4; // Request OpenGL 3.0 or above
     settings.minorVersion = 4;
 
-    App = std::make_unique<sf::RenderWindow>(sf::VideoMode(800, 600, 32), "SFML OpenGL", sf::Style::Default, settings);
+    Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(800, 600, 32), "SFML OpenGL", sf::Style::Default, settings);
    // sf::Clock Clock;
 
     GLenum glewInitResult = glewInit();
@@ -353,7 +354,7 @@ void Engine::Init()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(App->getSize().x) / App->getSize().y, 1.f, 300.f);
+    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(Window->getSize().x) / Window->getSize().y, 1.f, 300.f);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
     shader = std::make_unique<Shader>(vertexShaderSource, fragmentShaderSource);
 
@@ -369,6 +370,18 @@ void Engine::Init()
 }
 void Engine::Update()
 {
+    // Rotate the sphere
+    static bool rotate = true;
+    static float angle = 0;
+
+    if (rotate) {
+        angle = static_cast<float>(sf::Clock().getElapsedTime().asMicroseconds());
+    }
+
+  //  viewMatrix = glm::rotate(viewMatrix, angle / 50, glm::vec3(1.0f, 0.0f, 0.0f));
+    viewMatrix = glm::rotate(viewMatrix, angle / 30, glm::vec3(0.0f, 1.0f, 0.0f));
+   // viewMatrix = glm::rotate(viewMatrix, angle/100, glm::vec3(0.0f, 0.0f, 1.0f));
+
     glm::mat4 modelMatrix = glm::mat4(1.0f); // Identity matrix (no transformation for now)
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -391,27 +404,29 @@ Engine::~Engine()
 {
 
 }
+void Engine::ProcessEvents()
+{    
+    sf::Event Event;
+    while (Window->pollEvent(Event))
+    {
+        if (Event.type == sf::Event::Closed)
+            Window->close();
+
+        if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Escape))
+            Window->close();
+    }
+}
 void Engine::Run()
 {
-    while (App->isOpen()) 
+    while (Window->isOpen())
     {
-        sf::Event Event;
-        while (App->pollEvent(Event)) {
-            if (Event.type == sf::Event::Closed)
-                App->close();
+        ProcessEvents();
 
-            if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Escape))
-                App->close();
-        }
-
-        // Rendering
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         shader->use();
         Update();
         World->Draw();
-
-        App->display();
+        Window->display();
     }
 }
 // ... (Rest of the function prototypes)
