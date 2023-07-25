@@ -218,6 +218,8 @@ const char* vertexShaderSource_sphere = R"(
     uniform mat4 uProjection;
     uniform float uRotationAngle;
 
+
+
     out vec3 FragNormal;
     out vec3 FragPos;
 
@@ -306,28 +308,61 @@ void main() {
 //const char* vertexShaderSource = vertexShaderSource_sphere;
 //const char* fragmentShaderSource = fragmentShaderSource_sphere;
 const char* vertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
+#version 440 core
+    layout (location = 0) in vec3 aPos;
+    layout (location = 1) in vec3 aNormal;
+    
+    uniform mat4 uModel;
+    uniform mat4 uView;
+    uniform mat4 uProjection;
+    uniform float uRotationAngle;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
 
 
-void main()
+    out vec3 FragNormal;
+    out vec3 FragPos;
+
+    void main() 
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
+
+        FragNormal = mat3(transpose(inverse(uModel))) * aNormal;
+        FragPos = vec3(uModel * vec4(aPos, 1.0));
+        gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
+    }
 )";
 
 // Fragment Shader Source
 const char* fragmentShaderSource = R"(
-#version 330 core
+#version 440 core
+
+in vec3 FragNormal;
+in vec3 FragPos;
+
 out vec4 FragColor;
 
-void main()
-{
-    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+uniform vec3 uLightColor;
+uniform float uAmbientStrength;
+uniform float uDiffuseStrength;
+uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
+uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
+uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
+
+void main() {
+    vec3 ambient = uAmbientStrength * uLightColor;
+
+    // Calculate the light direction in view space
+    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
+    lightDir = normalize(FragPos - lightDir);
+
+    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
+
+    // Increase the green component of the light 
+    vec3 greenLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 1, uLightColor.z * 0.2);
+
+    vec3 diffuse = uDiffuseStrength * diff * greenLightColor * 3.5;
+
+    // Set the alpha component to 0.5 for half-transparency
+    FragColor = vec4(ambient + diffuse, 0.7);
 }
 )";/**/
 
@@ -342,46 +377,11 @@ public:
     void setVec3(const char* name, const glm::vec3& vector);
     void setFloat(const char* name, float value);
     GLuint getProgramID() const;
-    bool compileShader(GLuint shaderType, const char* shaderSource);
-    bool linkProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
 
 private:
     GLuint programID;
 };
-bool Shader::compileShader(GLuint shaderType, const char* shaderSource) {
-    GLuint shader = glCreateShader(shaderType);
-    glShaderSource(shader, 1, &shaderSource, nullptr);
-    glCompileShader(shader);
 
-    GLint compileStatus;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus == GL_FALSE) {
-        GLchar infoLog[512];
-        glGetShaderInfoLog(shader, sizeof(infoLog), nullptr, infoLog);
-        std::cerr << "Shader compilation error: " << infoLog << std::endl;
-        return false;
-    }
-
-    glAttachShader(programID, shader);
-    glDeleteShader(shader); // Delete the shader after attaching it
-
-    return true;
-}
-
-bool Shader::linkProgram(const char* vertexShader, const char* fragmentShader) {
-    glLinkProgram(programID);
-
-    GLint linkStatus;
-    glGetProgramiv(programID, GL_LINK_STATUS, &linkStatus);
-    if (linkStatus == GL_FALSE) {
-        GLchar infoLog[512];
-        glGetProgramInfoLog(programID, sizeof(infoLog), nullptr, infoLog);
-        std::cerr << "Shader program linking error: " << infoLog << std::endl;
-        return false;
-    }
-
-    return true;
-}
 
 Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
 {
@@ -435,6 +435,7 @@ void Shader::use()
     {
         std::cerr << "OpenGL Error: " << error << std::endl;
     }
+  //  std::cout << "Using Shader Program: " << programID << std::endl;
 }
 
 void Shader::setMat4(const char* name, const glm::mat4& matrix) {
@@ -520,12 +521,17 @@ void Object::render(Shader* shader)
 
     modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
     modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
+   // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+ //   glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
 
-  //  glEnable(GL_CULL_FACE);
-   // glCullFace(GL_BACK);
- //   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);    glDisable(GL_CULL_FACE);
-    glDisable(GL_CULL_FACE); // Disable face culling
-    glEnable(GL_DEPTH_TEST); // Enable depth testing
+    // ... (your rendering code for the cube) ...
+
+    // After rendering the cube:
+   
 
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -549,6 +555,7 @@ void Object::render(Shader* shader)
 
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
+    glDisable(GL_BLEND);
 
 }
 
@@ -568,6 +575,7 @@ class WorldManager
     glm::mat4 viewMatrix;
 
     std::unique_ptr <Shader> shader;
+    std::unique_ptr<Shader> shader2;
 public:
     std::shared_ptr<Object> sphere;
     std::shared_ptr<Object> cube;
@@ -581,6 +589,7 @@ WorldManager::WorldManager(int sizeX, int sizeY)
 {
 
     shader = std::make_unique<Shader>(vertexShaderSource_sphere, fragmentShaderSource_sphere);
+    shader2 = std::make_unique<Shader>(vertexShaderSource, fragmentShaderSource);
 
     modelLoc = glGetUniformLocation(shader->getProgramID(), "uModel");
     viewLoc = glGetUniformLocation(shader->getProgramID(), "uView");
@@ -592,7 +601,7 @@ WorldManager::WorldManager(int sizeX, int sizeY)
 
     // Camera setup
     glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    glm::vec3 cameraPos(0.f, 0.f, 300.f);
+    glm::vec3 cameraPos(0.f, 0.f, 200.f);
     glm::vec3 cameraTarget(0.f, 0.f, 0.f);
     glm::vec3 cameraUp(0.f, 1.f, 0.f);
     viewMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
@@ -608,8 +617,9 @@ WorldManager::WorldManager(int sizeX, int sizeY)
 
 
      sphere = std::make_shared<Object>(50.0f);
-     cube = std::make_shared<Object>(50.0f, 1);
+     cube = std::make_shared<Object>(100.0f, 1);
 
+  
      sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
      cube->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
 }
@@ -633,10 +643,13 @@ void WorldManager::Update()
 void WorldManager::Draw()
 {
     sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
+    cube->setRotationAngle(sphere->rotationAngle + 0.0003f);
 
     shader->use();
 
     sphere->render(shader.get());
+
+    shader2->use();
     cube->render(shader.get());
 }
 
