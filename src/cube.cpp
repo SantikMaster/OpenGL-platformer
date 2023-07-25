@@ -12,9 +12,55 @@
 const int SPHERE_SUBDIVISIONS = 3; // Increase for higher resolution spheres
 
 class Shader;
-struct Vertex {
+struct Vertex
+{
     float x, y, z;
     float normalX, normalY, normalZ;
+
+    Vertex() 
+    {
+        x = 0;
+        y = 0;
+        z = 0;
+
+
+        normalX = 0;
+        normalY = 0;
+        normalZ = 0;
+    }
+
+    Vertex(glm::vec3 vec)
+    {
+        x = vec.x;
+        y = vec.y;
+        z = vec.z;
+
+        float length = std::sqrt(x * x + y * y + z * z);
+
+        normalX = x;
+        normalY = y;
+        normalZ = z;
+
+        normalX /= length;
+        normalY /= length;
+        normalZ /= length;
+    }
+    Vertex(float xVal, float yVal, float zVal)
+    {
+        x = xVal;
+        y = yVal;
+        z = zVal;
+
+        float length = std::sqrt(x * x + y * y + z * z);
+
+        normalX = x;
+        normalY = y;
+        normalZ = z;
+
+        normalX /= length;
+        normalY /= length;
+        normalZ /= length;
+    }
 };
 
 
@@ -29,6 +75,64 @@ void normalize(Vertex& vertex) {
         vertex.normalY = vertex.y;
         vertex.normalZ = vertex.z;
     }
+}
+
+void createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength)
+{
+    // Vertices for a cube
+    vertices = {
+        // Front face
+        {-sideLength / 2, -sideLength / 2, sideLength / 2},
+        {sideLength / 2, -sideLength / 2, sideLength / 2},
+        {sideLength / 2, sideLength / 2, sideLength / 2},
+        {-sideLength / 2, sideLength / 2, sideLength / 2},
+
+        // Back face
+        {-sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {sideLength / 2, sideLength / 2, -sideLength / 2},
+        {-sideLength / 2, sideLength / 2, -sideLength / 2},
+
+        // Left face
+        {-sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {-sideLength / 2, -sideLength / 2, sideLength / 2},
+        {-sideLength / 2, sideLength / 2, sideLength / 2},
+        {-sideLength / 2, sideLength / 2, -sideLength / 2},
+
+        // Right face
+        {sideLength / 2, -sideLength / 2, sideLength / 2},
+        {sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {sideLength / 2, sideLength / 2, -sideLength / 2},
+        {sideLength / 2, sideLength / 2, sideLength / 2},
+
+        // Top face
+        {-sideLength / 2, sideLength / 2, sideLength / 2},
+        {sideLength / 2, sideLength / 2, sideLength / 2},
+        {sideLength / 2, sideLength / 2, -sideLength / 2},
+        {-sideLength / 2, sideLength / 2, -sideLength / 2},
+
+        // Bottom face
+        {-sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {sideLength / 2, -sideLength / 2, -sideLength / 2},
+        {sideLength / 2, -sideLength / 2, sideLength / 2},
+        {-sideLength / 2, -sideLength / 2, sideLength / 2}
+    };
+    // Indices for a cube (using triangle strip)
+    indices = {
+        0, 1, 2,  // Front face
+        2, 3, 0,
+        4, 5, 6,  // Right face
+        6, 7, 4,
+        8, 9, 10, // Back face
+        10, 11, 8,
+        12, 13, 14, // Left face
+        14, 15, 12,
+        16, 17, 18, // Bottom face
+        18, 19, 16,
+        20, 21, 22, // Top face
+        22, 23, 20
+    };
+    // Normalize the vertices
 }
 
 void createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius)
@@ -63,9 +167,9 @@ void createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& i
             Vertex v3pos = vertices[v3];
 
             // Create three new vertices at the midpoints of each triangle edge
-            Vertex v12 = { (v1pos.x + v2pos.x) / 2.0f, (v1pos.y + v2pos.y) / 2.0f, (v1pos.z + v2pos.z) / 2.0f };
-            Vertex v23 = { (v2pos.x + v3pos.x) / 2.0f, (v2pos.y + v3pos.y) / 2.0f, (v2pos.z + v3pos.z) / 2.0f };
-            Vertex v31 = { (v3pos.x + v1pos.x) / 2.0f, (v3pos.y + v1pos.y) / 2.0f, (v3pos.z + v1pos.z) / 2.0f };
+            Vertex v12 = Vertex(glm::vec3((v1pos.x + v2pos.x) / 2.0f, (v1pos.y + v2pos.y) / 2.0f, (v1pos.z + v2pos.z) / 2.0f ));
+            Vertex v23 = Vertex(glm::vec3((v2pos.x + v3pos.x) / 2.0f, (v2pos.y + v3pos.y) / 2.0f, (v2pos.z + v3pos.z) / 2.0f ));
+            Vertex v31 = Vertex(glm::vec3((v3pos.x + v1pos.x) / 2.0f, (v3pos.y + v1pos.y) / 2.0f, (v3pos.z + v1pos.z) / 2.0f ));
 
             // Normalize the new vertices to lie on the sphere's surface
             float len = std::sqrt(v12.x * v12.x + v12.y * v12.y + v12.z * v12.z);
@@ -104,7 +208,7 @@ void createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& i
 }
 
 
-const char* vertexShaderSource = R"(
+const char* vertexShaderSource_sphere = R"(
     #version 440 core
     layout (location = 0) in vec3 aPos;
     layout (location = 1) in vec3 aNormal;
@@ -124,118 +228,9 @@ const char* vertexShaderSource = R"(
         FragPos = vec3(uModel * vec4(aPos, 1.0));
         gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
     }
-)";/*/**/
-/*
-const char* fragmentShaderSource = R"(
-#version 440 core
+)";
 
-in vec3 FragNormal;
-in vec3 FragPos;
-
-out vec4 FragColor;
-
-uniform vec3 uLightColor;
-uniform float uAmbientStrength;
-uniform float uDiffuseStrength;
-uniform float uRotationAngle; // Uniform to pass the rotation angle from the CPU
-
-void main() {
-    vec3 ambient = uAmbientStrength * uLightColor;
-
-    // Calculate the light direction in view space
-    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
-    lightDir = normalize(FragPos - lightDir);
-
-    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
-
-    // Increase the blue component of the light color to make it more blue
-    vec3 blueLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 0.2, uLightColor.z * 1.0);
-
-    vec3 diffuse = uDiffuseStrength * diff * blueLightColor * 1.5;
-
-    // Define the range for the white stripe along the Y-axis
-    float startY = -10.0; // Adjust the value based on the size of your sphere
-    float endY = 10.0;   // Adjust the value based on the size of your sphere
-
-    // Rotate the position of the fragment using the rotation angle
-    float rotationAngleRad = radians(uRotationAngle); // Convert the rotation angle to radians
-    float rotatedY = FragPos.y * cos(rotationAngleRad*10) - FragPos.x * sin(rotationAngleRad*10);
-    float rotatedX = FragPos.y * sin(rotationAngleRad*10) + FragPos.x * cos(rotationAngleRad*10);
-    vec3 rotatedPosition = vec3(rotatedX, rotatedY, FragPos.z);
-
-    // Check if the rotated fragment's position is within the range of the white stripe
-    if (rotatedPosition.y >= startY && rotatedPosition.y <= endY) {
-        vec3 norm = normalize(FragNormal);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = uDiffuseStrength * diff * uLightColor;
-        FragColor = vec4(ambient + diffuse, 1.0); // White color
-    }
-    else {
-        FragColor = vec4(ambient + diffuse, 1.0);
-    }
-})";/**/
-
-/*
-const char* fragmentShaderSource = R"(
-#version 440 core
-
-in vec3 FragNormal;
-in vec3 FragPos;
-
-out vec4 FragColor;
-
-uniform vec3 uLightColor;
-uniform float uAmbientStrength;
-uniform float uDiffuseStrength;
-uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
-uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
-uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
-
-void main() {
-    vec3 ambient = uAmbientStrength * uLightColor;
-
-    // Calculate the light direction in view space
-    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
-    lightDir = normalize(FragPos - lightDir);
-
-    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
-
-    // Increase the blue component of the light color to make it more blue
-    vec3 blueLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 0.2, uLightColor.z * 1.0);
-
-    vec3 diffuse = uDiffuseStrength * diff * blueLightColor * 1.5;
-
-    // Calculate the uniform rotation angle using the absolute value of uSphereRotation
-    float uniformRotationAngle = uRotationAngle * length(uSphereRotation);
-
-    // Rotate the fragment's position based on the sphere's rotation angle and axis
-    float cosAngle = cos(uniformRotationAngle);
-    float sinAngle = sin(uniformRotationAngle);
-    vec3 centerToFrag = FragPos - uSphereCenter;
-    vec3 rotatedPos = vec3(
-        cosAngle * centerToFrag.x - sinAngle * centerToFrag.y + uSphereCenter.x,
-        cosAngle * centerToFrag.y + sinAngle * centerToFrag.x + uSphereCenter.y,
-        centerToFrag.z + uSphereCenter.z
-    );
-
-    // Calculate the distance of the rotated position from the X-axis
-    float distanceFromXAxis = abs(rotatedPos.y - uSphereCenter.y);
-
-    // Define the width of the stripe
-    float stripeWidth = 5.0; // Adjust the value based on your desired width
-
-    // Check if the distance from the X-axis is less than or equal to the stripe width
-    if (distanceFromXAxis <= stripeWidth * 0.5) {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color for the stripe
-    } else {
-        FragColor = vec4(ambient + diffuse, 1.0);
-    }
-}
-)";/**/
-
-
-
-const char* fragmentShaderSource = R"(
+const char* fragmentShaderSource_sphere = R"(
 #version 440 core
 
 in vec3 FragNormal;
@@ -308,37 +303,36 @@ void main() {
 
 )";
 
+//const char* vertexShaderSource = vertexShaderSource_sphere;
+//const char* fragmentShaderSource = fragmentShaderSource_sphere;
+const char* vertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
 
 
-class Sphere {
-public:
-    Sphere(float radius = 50.0f);
-    void render(Shader *shader);
-
-    void setRotationAngle(float angle);
-    void setPosition(const glm::vec3& position);
-
-    float rotationAngle;
-    glm::vec3 position;
-private:
-    std::vector<Vertex> vertices;
-    std::vector<Vertex> NewVertices;
-    std::vector<unsigned int> indices;
-    GLuint VBO, EBO;
-    glm::mat4 modelMatrix;
-
-
-};
-
-void Sphere::setRotationAngle(float angle) {
-    rotationAngle = angle;
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
+)";
 
-void Sphere::setPosition(const glm::vec3& pos) {
-    position = pos;
+// Fragment Shader Source
+const char* fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
 }
+)";/**/
 
-class Shader 
+
+class Shader
 {
 public:
     Shader(const char* vertexShaderSource, const char* fragmentShaderSource);
@@ -348,66 +342,53 @@ public:
     void setVec3(const char* name, const glm::vec3& vector);
     void setFloat(const char* name, float value);
     GLuint getProgramID() const;
+    bool compileShader(GLuint shaderType, const char* shaderSource);
+    bool linkProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
 
 private:
     GLuint programID;
 };
+bool Shader::compileShader(GLuint shaderType, const char* shaderSource) {
+    GLuint shader = glCreateShader(shaderType);
+    glShaderSource(shader, 1, &shaderSource, nullptr);
+    glCompileShader(shader);
 
-
-Sphere::Sphere(float radius)
-{
-    modelMatrix = glm::mat4(1.0f);
-    rotationAngle = 0;
-    position = glm::vec3(0, 0, 0);
-
-    createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
-    for (size_t i = 0; i < vertices.size(); ++i)
-    {
-        Vertex ver;
-        NewVertices.push_back(ver);
-        
+    GLint compileStatus;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus == GL_FALSE) {
+        GLchar infoLog[512];
+        glGetShaderInfoLog(shader, sizeof(infoLog), nullptr, infoLog);
+        std::cerr << "Shader compilation error: " << infoLog << std::endl;
+        return false;
     }
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    glAttachShader(programID, shader);
+    glDeleteShader(shader); // Delete the shader after attaching it
+
+    return true;
 }
 
-void Sphere::render(Shader* shader)
+bool Shader::linkProgram(const char* vertexShader, const char* fragmentShader) {
+    glLinkProgram(programID);
+
+    GLint linkStatus;
+    glGetProgramiv(programID, GL_LINK_STATUS, &linkStatus);
+    if (linkStatus == GL_FALSE) {
+        GLchar infoLog[512];
+        glGetProgramInfoLog(programID, sizeof(infoLog), nullptr, infoLog);
+        std::cerr << "Shader program linking error: " << infoLog << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
 {
-
-
-    modelMatrix = glm::mat4(1.0f);
-
-    modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
-    modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-
-    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), rotationAngle);
-    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
-    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereRotation"), 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, +10.0f)));
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, x)));
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normalX)));
-
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);/**/ 
-}
-
-Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource) {
     GLuint vertexShader, fragmentShader;
+    GLenum error;
+
+
 
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
@@ -428,6 +409,10 @@ Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
     glLinkProgram(programID);
 
     // Check for shader program linking status (omitted for brevity)
+    while ((error = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "OpenGL Error: " << error << std::endl;
+    }
 
     glDetachShader(programID, vertexShader);
     glDetachShader(programID, fragmentShader);
@@ -435,12 +420,21 @@ Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
     glDeleteShader(fragmentShader);
 }
 
-Shader::~Shader() {
+Shader::~Shader() 
+{
     glDeleteProgram(programID);
+    // Check for shader program linking status (omitted for brevity)
+
 }
 
-void Shader::use() {
+void Shader::use() 
+{
+    GLenum error;
     glUseProgram(programID);
+    while ((error = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "OpenGL Error: " << error << std::endl;
+    }
 }
 
 void Shader::setMat4(const char* name, const glm::mat4& matrix) {
@@ -455,9 +449,109 @@ void Shader::setFloat(const char* name, float value) {
     glUniform1f(glGetUniformLocation(programID, name), value);
 }
 
-GLuint Shader::getProgramID() const {
+GLuint Shader::getProgramID() const 
+{
     return programID;
 }
+
+
+class Sphere 
+{
+public:
+    Sphere(float radius = 50.0f, bool shapeType = false);
+    void render(Shader *shader);
+
+    void setRotationAngle(float angle);
+    void setPosition(const glm::vec3& position);
+
+    float rotationAngle;
+    glm::vec3 position;
+    bool ShapeType = 0;
+private:
+    std::vector<Vertex> vertices;
+    std::vector<Vertex> NewVertices;
+    std::vector<unsigned int> indices;
+    GLuint VBO, EBO;
+    glm::mat4 modelMatrix;
+};
+
+void Sphere::setRotationAngle(float angle) 
+{
+    rotationAngle = angle;
+}
+
+void Sphere::setPosition(const glm::vec3& pos) 
+{
+    position = pos;
+}
+
+Sphere::Sphere(float radius, bool shapeType)
+{
+    ShapeType = shapeType;
+    modelMatrix = glm::mat4(1.0f);
+    rotationAngle = 0;
+    position = glm::vec3(0, 0, 0);
+
+    if (shapeType == 0)
+        createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
+    else 
+        createCube(vertices, indices, radius);
+
+    for (size_t i = 0; i < vertices.size(); ++i)
+    {
+        Vertex ver;
+        NewVertices.push_back(ver);
+
+    }
+
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+}
+
+void Sphere::render(Shader* shader)
+{
+    modelMatrix = glm::mat4(1.0f);
+
+    modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
+    modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
+
+  //  glEnable(GL_CULL_FACE);
+   // glCullFace(GL_BACK);
+ //   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);    glDisable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE); // Disable face culling
+    glEnable(GL_DEPTH_TEST); // Enable depth testing
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), rotationAngle);
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereRotation"), 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, +10.0f)));
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, x)));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normalX)));
+
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+
+}
+
 
 
 class WorldManager
@@ -467,23 +561,28 @@ class WorldManager
 
 public:
     WorldManager();
-    void Draw(Shader* shader);
+    void Draw(Shader* shader, Shader* cube_shader);
 };
 
 WorldManager::WorldManager()
 {
      sphere = std::make_shared<Sphere>(50.0f);
-     sphere2 = std::make_shared<Sphere>(50.0f);
+     sphere2 = std::make_shared<Sphere>(50.0f, 1);
+
      sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
      sphere2->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
 }
 
-void WorldManager::Draw(Shader* shader)
+void WorldManager::Draw(Shader* shader, Shader* cube_shader)
 {
     sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
+  //  sphere2->setRotationAngle(sphere->rotationAngle + 0.000f);
+
+    shader->use();
 
     sphere->render(shader);
     sphere2->render(shader);
+
 }
 
 class Engine
@@ -512,12 +611,13 @@ public:
 
     std::unique_ptr<sf::RenderWindow> Window;
     std::unique_ptr <Shader> shader;
+    std::unique_ptr <Shader> cube_shader;
     std::unique_ptr<WorldManager> World;
  
 };
+
 void Engine::Init()
 {
-
     settings.depthBits = 24; // Set the depth buffer bits to 24
     settings.majorVersion = 4; // Request OpenGL 3.0 or above
     settings.minorVersion = 4;
@@ -555,7 +655,9 @@ void Engine::Init()
     glLoadIdentity();
     projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(Window->getSize().x) / Window->getSize().y, 1.f, 300.f);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
-    shader = std::make_unique<Shader>(vertexShaderSource, fragmentShaderSource);
+
+    shader = std::make_unique<Shader>(vertexShaderSource_sphere, fragmentShaderSource_sphere);
+    cube_shader = std::make_unique<Shader>(vertexShaderSource, fragmentShaderSource);
 
     modelLoc = glGetUniformLocation(shader->getProgramID(), "uModel");
     viewLoc = glGetUniformLocation(shader->getProgramID(), "uView");
@@ -565,20 +667,11 @@ void Engine::Init()
     ambientStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uAmbientStrength");
     diffuseStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uDiffuseStrength");
 
+    shader->use();
     World = std::make_unique<WorldManager>();
 }
 void Engine::Update()
 {
-    // Rotate the camera
-    static bool rotate = true;
-    static float angle = 0;
-
-    if (rotate) {
-        angle = static_cast<float>(sf::Clock().getElapsedTime().asMicroseconds());
-    }
-
-  /**/ // glm::mat4 modelMatrix = glm::mat4(1.0f); // Identity matrix (no transformation for now)
-  //  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
@@ -586,21 +679,24 @@ void Engine::Update()
     lightDirection = glm::mat3(viewMatrix) * lightDirection;
     glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
 
-
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // White light color
     glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 
     glUniform1f(ambientStrengthLoc, 0.2f);
     glUniform1f(diffuseStrengthLoc, 0.7f);
 }
+
+
 Engine::Engine()
 {
     Init();
 }
+
 Engine::~Engine()
 {
 
 }
+
 void Engine::ProcessEvents()
 {    
     sf::Event Event;
@@ -613,6 +709,7 @@ void Engine::ProcessEvents()
             Window->close();
     }
 }
+
 void Engine::Run()
 {
     Window->setActive(true);
@@ -621,13 +718,12 @@ void Engine::Run()
         ProcessEvents();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        shader->use();
+       
         Update();
-        World->Draw(shader.get());
+        World->Draw(shader.get(), cube_shader.get());
         Window->display();
     }
 }
-// ... (Rest of the function prototypes)
 
 int main()
 {
