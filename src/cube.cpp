@@ -455,10 +455,10 @@ GLuint Shader::getProgramID() const
 }
 
 
-class Sphere 
+class Object
 {
 public:
-    Sphere(float radius = 50.0f, bool shapeType = false);
+    Object(float radius = 50.0f, bool shapeType = false);
     void render(Shader *shader);
 
     void setRotationAngle(float angle);
@@ -475,17 +475,17 @@ private:
     glm::mat4 modelMatrix;
 };
 
-void Sphere::setRotationAngle(float angle) 
+void Object::setRotationAngle(float angle)
 {
     rotationAngle = angle;
 }
 
-void Sphere::setPosition(const glm::vec3& pos) 
+void Object::setPosition(const glm::vec3& pos)
 {
     position = pos;
 }
 
-Sphere::Sphere(float radius, bool shapeType)
+Object::Object(float radius, bool shapeType)
 {
     ShapeType = shapeType;
     modelMatrix = glm::mat4(1.0f);
@@ -514,7 +514,7 @@ Sphere::Sphere(float radius, bool shapeType)
 
 }
 
-void Sphere::render(Shader* shader)
+void Object::render(Shader* shader)
 {
     modelMatrix = glm::mat4(1.0f);
 
@@ -556,33 +556,88 @@ void Sphere::render(Shader* shader)
 
 class WorldManager
 {
-    std::shared_ptr<Sphere> sphere;
-    std::shared_ptr<Sphere> sphere2;
+    GLint modelLoc;
+    GLint viewLoc;
+    GLint projectionLoc;
+    GLint lightDirLoc;
+    GLint lightColorLoc;
+    GLint ambientStrengthLoc;
+    GLint diffuseStrengthLoc;
 
+    glm::mat4 projectionMatrix;
+    glm::mat4 viewMatrix;
+
+    std::unique_ptr <Shader> shader;
 public:
-    WorldManager();
-    void Draw(Shader* shader, Shader* cube_shader);
+    std::shared_ptr<Object> sphere;
+    std::shared_ptr<Object> cube;
+
+    WorldManager(int, int);
+    void Update();
+    void Draw();
 };
 
-WorldManager::WorldManager()
+WorldManager::WorldManager(int sizeX, int sizeY)
 {
-     sphere = std::make_shared<Sphere>(50.0f);
-     sphere2 = std::make_shared<Sphere>(50.0f, 1);
 
-     sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
-     sphere2->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
-}
+    shader = std::make_unique<Shader>(vertexShaderSource_sphere, fragmentShaderSource_sphere);
 
-void WorldManager::Draw(Shader* shader, Shader* cube_shader)
-{
-    sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
-  //  sphere2->setRotationAngle(sphere->rotationAngle + 0.000f);
+    modelLoc = glGetUniformLocation(shader->getProgramID(), "uModel");
+    viewLoc = glGetUniformLocation(shader->getProgramID(), "uView");
+    projectionLoc = glGetUniformLocation(shader->getProgramID(), "uProjection");
+    lightDirLoc = glGetUniformLocation(shader->getProgramID(), "uLightDirection");
+    lightColorLoc = glGetUniformLocation(shader->getProgramID(), "uLightColor");
+    ambientStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uAmbientStrength");
+    diffuseStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uDiffuseStrength");
+
+    // Camera setup
+    glm::vec3 lightDirection(0.f, 1.f, 0.f);
+    glm::vec3 cameraPos(0.f, 0.f, 300.f);
+    glm::vec3 cameraTarget(0.f, 0.f, 0.f);
+    glm::vec3 cameraUp(0.f, 1.f, 0.f);
+    viewMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(glm::value_ptr(viewMatrix));
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, 300.f);
+    glLoadMatrixf(glm::value_ptr(projectionMatrix));
 
     shader->use();
 
-    sphere->render(shader);
-    sphere2->render(shader);
 
+     sphere = std::make_shared<Object>(50.0f);
+     cube = std::make_shared<Object>(50.0f, 1);
+
+     sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
+     cube->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
+}
+
+void WorldManager::Update()
+{
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    glm::vec3 lightDirection(0.f, 1.f, 0.f);
+    lightDirection = glm::mat3(viewMatrix) * lightDirection;
+    glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
+
+    glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // White light color
+    glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+
+    glUniform1f(ambientStrengthLoc, 0.2f);
+    glUniform1f(diffuseStrengthLoc, 0.7f);
+}
+
+void WorldManager::Draw()
+{
+    sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
+
+    shader->use();
+
+    sphere->render(shader.get());
+    cube->render(shader.get());
 }
 
 class Engine
@@ -591,17 +646,10 @@ class Engine
 
 
     sf::ContextSettings settings;
-    glm::mat4 projectionMatrix;
-    glm::mat4 viewMatrix;
+ 
     
 
-    GLint modelLoc;
-    GLint viewLoc;
-    GLint projectionLoc;
-    GLint lightDirLoc;
-    GLint lightColorLoc;
-    GLint ambientStrengthLoc;
-    GLint diffuseStrengthLoc;
+
 public:
     Engine();
     ~Engine();
@@ -610,7 +658,7 @@ public:
     void Run();
 
     std::unique_ptr<sf::RenderWindow> Window;
-    std::unique_ptr <Shader> shader;
+
     std::unique_ptr <Shader> cube_shader;
     std::unique_ptr<WorldManager> World;
  
@@ -642,48 +690,14 @@ void Engine::Init()
     glDepthMask(GL_TRUE);
 
 
-    // Camera setup
-    glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    glm::vec3 cameraPos(0.f, 0.f, 200.f);
-    glm::vec3 cameraTarget(0.f, 0.f, 0.f);
-    glm::vec3 cameraUp(0.f, 1.f, 0.f);
-    viewMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(glm::value_ptr(viewMatrix));
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(Window->getSize().x) / Window->getSize().y, 1.f, 300.f);
-    glLoadMatrixf(glm::value_ptr(projectionMatrix));
 
-    shader = std::make_unique<Shader>(vertexShaderSource_sphere, fragmentShaderSource_sphere);
-    cube_shader = std::make_unique<Shader>(vertexShaderSource, fragmentShaderSource);
 
-    modelLoc = glGetUniformLocation(shader->getProgramID(), "uModel");
-    viewLoc = glGetUniformLocation(shader->getProgramID(), "uView");
-    projectionLoc = glGetUniformLocation(shader->getProgramID(), "uProjection");
-    lightDirLoc = glGetUniformLocation(shader->getProgramID(), "uLightDirection");
-    lightColorLoc = glGetUniformLocation(shader->getProgramID(), "uLightColor");
-    ambientStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uAmbientStrength");
-    diffuseStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uDiffuseStrength");
-
-    shader->use();
-    World = std::make_unique<WorldManager>();
+    World = std::make_unique<WorldManager>(Window->getSize().x, Window->getSize().y);
 }
 void Engine::Update()
 {
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-    glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    lightDirection = glm::mat3(viewMatrix) * lightDirection;
-    glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
-
-    glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // White light color
-    glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
-
-    glUniform1f(ambientStrengthLoc, 0.2f);
-    glUniform1f(diffuseStrengthLoc, 0.7f);
+    World->Update();
 }
 
 
@@ -720,7 +734,7 @@ void Engine::Run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
        
         Update();
-        World->Draw(shader.get(), cube_shader.get());
+        World->Draw();
         Window->display();
     }
 }
