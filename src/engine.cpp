@@ -48,11 +48,11 @@ void Engine::Init()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
 
-    World = std::make_unique<WorldManager>(Window->getSize().x, Window->getSize().y);
+    World = std::make_unique<WorldManager>();
 }
 void Engine::Update()
 {
-    World->Update();
+    World->Update(Window->getSize().x, Window->getSize().y);
 }
 
 

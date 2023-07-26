@@ -42,6 +42,7 @@ in vec3 FragPos;
 out vec4 FragColor;
 
 uniform vec3 uLightColor;
+uniform vec3 uLightDirection;  // Added light direction uniform
 uniform float uAmbientStrength;
 uniform float uDiffuseStrength;
 uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
@@ -52,8 +53,8 @@ void main() {
     vec3 ambient = uAmbientStrength * uLightColor;
 
     // Calculate the light direction in view space
-    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
-    lightDir = normalize(FragPos - lightDir);
+    vec3 lightDir = normalize(uLightDirection);  // Use the light direction uniform
+//    vec3 lightDir2 = normalize(vec3(1,0,0));  // U
 
     float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
 
@@ -68,41 +69,30 @@ void main() {
     // Calculate the vector from the fragment's position to the sphere's center
     vec3 centerToFrag = FragPos - uSphereCenter;
 
-    // Calculate the dot product between uSphereRotation and the vector to determine the rotation direction
-    float rotationDot = dot(normalize(uSphereRotation), normalize(centerToFrag));
-
-    // Adjust the rotation angle based on the rotation direction
- 
-    float finalRotationAngle = uniformRotationAngle*sign(rotationDot);
-
-    // Rotate the fragment's position based on the sphere's rotation angle and axis
-    float cosAngle = cos(finalRotationAngle);
-    float sinAngle = sin(finalRotationAngle);
-/*    vec3 rotatedPos = vec3(
+    // Rotate the vector representing the fragment's position around the Y-axis
+    float cosAngle = cos(uniformRotationAngle);
+    float sinAngle = sin(uniformRotationAngle);
+    vec3 rotatedPos = vec3(
         cosAngle * centerToFrag.x - sinAngle * centerToFrag.z + uSphereCenter.x,
         FragPos.y,
         sinAngle * centerToFrag.x + cosAngle * centerToFrag.z + uSphereCenter.z
-    );*/
-
-    vec3 rotatedPos = vec3(
-        cosAngle * centerToFrag.x - sinAngle * centerToFrag.y + uSphereCenter.x,
-        cosAngle * centerToFrag.y + sinAngle * centerToFrag.x + uSphereCenter.y,
-        centerToFrag.z + uSphereCenter.z
     );
 
-    // Calculate the distance of the rotated position from the Y-axis
-    float distanceFromYAxis = abs(rotatedPos.x - uSphereCenter.x);
+    // Calculate the distance of the rotated position from the Y-axis (to check for rotation)
+    float rotatedDistanceFromYAxis = abs(rotatedPos.z - uSphereCenter.z);
 
     // Define the width of the stripe
     float stripeWidth = 10.0; // Adjust the value based on your desired width
 
-    // Check if the distance from the Y-axis is less than or equal to the stripe width
-    if (distanceFromYAxis <= stripeWidth * 0.5) {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+    // Check if the distance from the Z-axis is within the stripe width
+    if (rotatedDistanceFromYAxis <= stripeWidth * 0.5) {
+        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color for the rotating stripe
     } else {
         FragColor = vec4(ambient + diffuse, 1.0);
     }
 }
+
+
 
 )";
 
@@ -131,6 +121,7 @@ const char* VertexShaderSource = R"(
     }
 )";
 
+
 // Fragment Shader Source
 const char* FragmentShaderSource = R"(
 #version 440 core
@@ -141,31 +132,32 @@ in vec3 FragPos;
 out vec4 FragColor;
 
 uniform vec3 uLightColor;
+uniform vec3 uLightDirection;  // Added light direction uniform
 uniform float uAmbientStrength;
 uniform float uDiffuseStrength;
 uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
 uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
 uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
 
-void main() {
-    vec3 ambient = uAmbientStrength * uLightColor;
+void main() 
+{
 
-    // Calculate the light direction in view space
-    vec3 lightDir = normalize(vec3(0, 0, 1)); // Assuming the light is facing in the negative Z direction
-    lightDir = normalize(FragPos - lightDir);
+    vec3 greenColor = vec3(0.0, 1.0, 0.1);
+    // Calculate the Lambertian lighting intensity
+    float diffuseStrength = max(dot(normalize(FragNormal), vec3(0,-2,2)), 0.0);
 
-    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
+    // Set the final color as the diffuse color of the cube multiplied by the lighting intensity
+    vec3 diffuse = greenColor * diffuseStrength*4;
 
-    // Increase the green component of the light 
-    vec3 greenLightColor = vec3(uLightColor.x * 0.2, uLightColor.y * 1, uLightColor.z * 0.2);
+    vec3 ambient = uAmbientStrength * vec3(0, 0.2, 2.2)*5;
+    vec3 finalColor = ambient + diffuse;
 
-    vec3 diffuse = uDiffuseStrength * diff * greenLightColor * 3.5;
 
-    // Set the alpha component to 0.5 for half-transparency
-    FragColor = vec4(ambient + diffuse, 0.7);
+    // Set the alpha component to 1.0 for full opacity
+    FragColor = vec4(finalColor, 0.5);
 }
 )";
-WorldManager::WorldManager(int sizeX, int sizeY)
+WorldManager::WorldManager()
 {
 
     shader = std::make_unique<Shader>(VertexShaderSource_sphere, FragmentShaderSource_sphere);
@@ -180,37 +172,44 @@ WorldManager::WorldManager(int sizeX, int sizeY)
     diffuseStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uDiffuseStrength");
 
     // Camera setup
-    glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    glm::vec3 cameraPos(0.f, 0.f, 200.f);
+
+    shader->use();
+
+
+    sphere = std::make_shared<Object>(50.0f);
+
+    int i = 0;
+    for (i = 0; i < 10; i++)
+    {
+        std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
+        obj->setPosition(glm::vec3(100.0f*i-400, 0.0f, 0.0f));
+        cube_que.push_back(obj);
+    }
+
+    sphere->setPosition(glm::vec3(00.0f, 00.0f, 100.0f));
+
+}
+
+void WorldManager::Update(int sizeX, int sizeY) // 
+{
+    //  glm::vec3 lightDirection(0.f, 1.f, 0.f);
+    glm::vec3 cameraPos(-300.0f, -400.0f, 200.f);
     glm::vec3 cameraTarget(0.f, 0.f, 0.f);
-    glm::vec3 cameraUp(0.f, 1.f, 0.f);
+    glm::vec3 cameraUp(0.f, 0.1f, 0.8f);
     viewMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(glm::value_ptr(viewMatrix));
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, 300.f);
+    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, 2000.f);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
 
-    shader->use();
 
-
-    sphere = std::make_shared<Object>(50.0f);
-    cube = std::make_shared<Object>(100.0f, 1);
-
-
-    sphere->setPosition(glm::vec3(-50.0f, 0.0f, 0.0f));
-    cube->setPosition(glm::vec3(100.0f, 0.0f, 0.0f));
-}
-
-void WorldManager::Update()
-{
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-    glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    lightDirection = glm::mat3(viewMatrix) * lightDirection;
+    glm::vec3 lightDirection(-1.f, -1.f, 0.f);
     glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
 
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // White light color
@@ -223,12 +222,17 @@ void WorldManager::Update()
 void WorldManager::Draw()
 {
     sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
-    cube->setRotationAngle(sphere->rotationAngle + 0.0013f);
 
     shader->use();
 
     sphere->render(shader.get());
 
     shader2->use();
-    cube->render(shader.get());
+    shader->setMat4("uView", viewMatrix);
+    shader->setMat4("uProjection", projectionMatrix);
+
+    for (auto i = cube_que.begin(); i != cube_que.end(); i++)
+    {
+        i->get()->render(shader.get());
+    }
 }

@@ -3,8 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "shader.h"
-
-
+#include <deque>
 
 class Object;
 class Shader;
@@ -19,6 +18,9 @@ class WorldManager
     GLint ambientStrengthLoc;
     GLint diffuseStrengthLoc;
 
+ //   glm::vec3 cameraPos;
+ //   glm::vec3 cameraTarget;
+ //   glm::vec3 cameraUp;
     glm::mat4 projectionMatrix;
     glm::mat4 viewMatrix;
 
@@ -26,15 +28,11 @@ class WorldManager
     std::unique_ptr<Shader> shader2;
 public:
     std::shared_ptr<Object> sphere;
-    std::shared_ptr<Object> cube;
+  //  std::shared_ptr<Object> cube;
+    std::deque<std::shared_ptr<Object>> cube_que;
 
-    WorldManager(int, int);
-    void Update();
+    WorldManager();
+    void Update(int sizeX, int sizeY);
     void Draw();
-
-  //  char* vertexShaderSource = VertexShaderSource;
-  //  char* fragmentShaderSource = FragmentShaderSource;
-   // char* vertexShaderSource_sphere = VertexShaderSource_sphere;
-   // char* fragmentShaderSource_sphere = FragmentShaderSource_sphere;
 };
 
