@@ -46,8 +46,21 @@ endif()
 
 # Add your project's source files here
 set(SOURCES
-    src/cube.cpp
+    src/main.cpp
+    src/engine.cpp
+    src/object.cpp
+    src/shader.cpp
+    src/worldmanager.cpp
 )
+
+set(HEADERS
+    src/engine.h
+    src/object.h
+    src/shader.h
+    src/worldmanager.h
+    src/vertex.h
+)
+
 
 # Add the executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
