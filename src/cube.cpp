@@ -82,16 +82,16 @@ void createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indice
     // Vertices for a cube
     vertices = {
         // Front face
-        {-sideLength / 2, -sideLength / 2, sideLength / 2},
+       {-sideLength / 2, -sideLength / 2, sideLength / 2},
         {sideLength / 2, -sideLength / 2, sideLength / 2},
         {sideLength / 2, sideLength / 2, sideLength / 2},
         {-sideLength / 2, sideLength / 2, sideLength / 2},
 
         // Back face
-        {-sideLength / 2, -sideLength / 2, -sideLength / 2},
+       {-sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, sideLength / 2, -sideLength / 2},
-        {-sideLength / 2, sideLength / 2, -sideLength / 2},
+        {-sideLength / 2, sideLength / 2, -sideLength / 2},/**/
 
         // Left face
         {-sideLength / 2, -sideLength / 2, -sideLength / 2},
@@ -103,10 +103,10 @@ void createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indice
         {sideLength / 2, -sideLength / 2, sideLength / 2},
         {sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, sideLength / 2, -sideLength / 2},
-        {sideLength / 2, sideLength / 2, sideLength / 2},
+        {sideLength / 2, sideLength / 2, sideLength / 2}, 
 
         // Top face
-        {-sideLength / 2, sideLength / 2, sideLength / 2},
+         {-sideLength / 2, sideLength / 2, sideLength / 2},
         {sideLength / 2, sideLength / 2, sideLength / 2},
         {sideLength / 2, sideLength / 2, -sideLength / 2},
         {-sideLength / 2, sideLength / 2, -sideLength / 2},
@@ -115,7 +115,7 @@ void createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indice
         {-sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, sideLength / 2},
-        {-sideLength / 2, -sideLength / 2, sideLength / 2}
+        {-sideLength / 2, -sideLength / 2, sideLength / 2}/**/
     };
     // Indices for a cube (using triangle strip)
     indices = {
@@ -429,11 +429,11 @@ Shader::~Shader()
 
 void Shader::use() 
 {
-    GLenum error;
+ //   GLenum error;
     glUseProgram(programID);
-    while ((error = glGetError()) != GL_NO_ERROR)
+ //   while ((error = glGetError()) != GL_NO_ERROR)
     {
-        std::cerr << "OpenGL Error: " << error << std::endl;
+  //      std::cerr << "OpenGL Error: " << error << std::endl;
     }
   //  std::cout << "Using Shader Program: " << programID << std::endl;
 }
@@ -643,7 +643,7 @@ void WorldManager::Update()
 void WorldManager::Draw()
 {
     sphere->setRotationAngle(sphere->rotationAngle + 0.0001f);
-    cube->setRotationAngle(sphere->rotationAngle + 0.0003f);
+    cube->setRotationAngle(sphere->rotationAngle + 0.0013f);
 
     shader->use();
 
