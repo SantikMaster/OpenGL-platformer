@@ -54,7 +54,11 @@ void Object::render(Shader* shader)
 {
     modelMatrix = glm::mat4(1.0f);
 
-    modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
+    if (ShapeType == 1)
+        modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
+    else
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, position.y, position.z));
+   
     modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
@@ -75,7 +79,10 @@ void Object::render(Shader* shader)
 
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), rotationAngle);
-    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
+    if (ShapeType == 1)
+        glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
+    else
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(glm::vec3(0, position.y, position.z)));
     glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereRotation"), 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, +10.0f)));
 
     glEnableVertexAttribArray(0);

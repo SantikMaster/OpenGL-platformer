@@ -10,6 +10,7 @@ class Engine
     void Init();
 
     sf::ContextSettings settings;
+    sf::Clock timer;
 
 public:
     Engine();

@@ -63,11 +63,39 @@ void Engine::ProcessEvents()
     sf::Event Event;
     while (Window->pollEvent(Event))
     {
+      //  if(Event.KeyPressed  )
         if (Event.type == sf::Event::Closed)
             Window->close();
 
         if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Escape))
+        {
             Window->close();
+        }
+        if ((Event.type == sf::Event::KeyPressed) && ((Event.key.code == sf::Keyboard::A) || (Event.key.code == sf::Keyboard::Left)))
+        {
+            if (timer.getElapsedTime().asMilliseconds() >= 50)
+            {
+                World->SphereVelocityX -= World->SpheredeltaVelocityX;
+                timer.restart();
+            }
+        }
+        if ((Event.type == sf::Event::KeyPressed) && ((Event.key.code == sf::Keyboard::D) || (Event.key.code == sf::Keyboard::Right)))
+        {
+            if (timer.getElapsedTime().asMilliseconds() >= 50)
+            {
+                World->SphereVelocityX += World->SpheredeltaVelocityX;
+                timer.restart();
+            }
+        }
+        if ((Event.type == sf::Event::KeyPressed) && (Event.key.code == sf::Keyboard::Space))
+        {
+            if (timer.getElapsedTime().asMilliseconds() >= 50)
+            {
+                World->SphereJump();
+                
+                timer.restart();
+            }
+        }
     }
 }
 
