@@ -27,12 +27,12 @@ public:
     sf::Clock Timer;
     sf::Clock MapTimer;
 
+    bool EndingGame = false;
     const int MaxGroundHeight = 200;
     const int MinGroundHeight = -300;
 
     float SphereVelocityX = 0;
     float SpheredeltaVelocityX = 0.002;
-    bool EndingGame = false;
 
     float SphereVelocityZ = 0;
     float SpherePushVelocityZ = 5;
@@ -48,7 +48,6 @@ public:
     sf::Font Font;
     sf::Text Text;
     sf::Image backgroundImage;
-  //  std::unique_ptr<sf::RectangleShape> rectangle;
 
     void GenerateMap();
     void SphereJump();
