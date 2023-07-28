@@ -117,17 +117,17 @@ void Engine::Run()
         {     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            static int PG = 0;
 
             glBindVertexArray(0);
-            glUseProgram(0);
-
-            // Disable vertex attribute arrays
             glDisableVertexAttribArray(0);
-            glDisableVertexAttribArray(1);/* */
+            glUseProgram(0);
+            glDisableVertexAttribArray(1);
+
+            Window->setActive(false);
 
             World->DrawEndBanner(Window.get());
         }
-
         Window->display();
     }
 }

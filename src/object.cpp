@@ -29,9 +29,9 @@ Object::Object(float radius, bool shapeType)
     Position = glm::vec3(0, 0, 0);
 
     if (shapeType == 0)
-        createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
+        CreateIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
     else
-        createCube(vertices, indices, radius);
+        CreateCube(vertices, indices, radius);
 
     for (size_t i = 0; i < vertices.size(); ++i)
     {
@@ -61,12 +61,12 @@ void Object::Render(Shader* shader)
    
     modelMatrix = glm::rotate(modelMatrix, RotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_BLEND);
+   glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
     //   glEnable(GL_CULL_FACE);
     glDisable(GL_CULL_FACE);
-
+ 
 
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -93,7 +93,6 @@ void Object::Render(Shader* shader)
 
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
-    glDisable(GL_BLEND);
 }
 
 void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength)
@@ -134,7 +133,7 @@ void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>
         {-sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, sideLength / 2},
-        {-sideLength / 2, -sideLength / 2, sideLength / 2}/**/
+        {-sideLength / 2, -sideLength / 2, sideLength / 2}
     };
     // Indices for a cube (using triangle strip)
     indices = {
@@ -151,7 +150,6 @@ void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>
         20, 21, 22, // Top face
         22, 23, 20
     };
-    // Normalize the vertices
 }
 
 void Object::CreateIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius)

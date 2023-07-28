@@ -184,12 +184,12 @@ WorldManager::WorldManager()
 void WorldManager::Restart()
 {
     srand(time(0));
-    if (!Font.loadFromFile(myfontFileName))
+    if (Font.loadFromFile(myfontFileName))
     {
-        std::cout << "font not loaded";
+        std::cout << "font loaded";
     }
 
-
+    CubeQue.clear();
     int i = 0;
     for (i = 0; i < 20; i++)
     {
@@ -201,7 +201,6 @@ void WorldManager::Restart()
     Sphere->SetPosition(glm::vec3(00.0f, 00.0f, 150.0f));
     Score = 0;
     EndingGame = false;
-    CubeQue.clear();
 }
 
 void WorldManager::GenerateMap()
@@ -209,7 +208,7 @@ void WorldManager::GenerateMap()
     auto back_element = CubeQue.back();
 
     int val = 110*::rand() / RAND_MAX;
-    std::shared_ptr<Object> obj = std::make_shared<Object>(Object::CUBE_EDGE, 1);
+    std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
 
     if (val < 50)
     {
@@ -220,7 +219,7 @@ void WorldManager::GenerateMap()
     {
         if (back_element->Position.z > MinGroundHeight)
         {
-            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z- Object::CUBE_EDGE));
+            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z - Object::CUBE_EDGE));
         }
         else
         {
@@ -238,13 +237,12 @@ void WorldManager::GenerateMap()
             obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, MaxGroundHeight));
         }
     }
-    else 
+    else
     {
         obj->SetPosition(glm::vec3(back_element->Position.x + 200, 0, back_element->Position.z));
     }
     CubeQue.push_back(obj);
     CubeQue.pop_front();
-
 }
 
 bool WorldManager::Collide(int FutureX, int FutureZ) // 
@@ -336,7 +334,7 @@ void WorldManager::Update(int sizeX, int sizeY) //
     glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 
     glUniform1f(ambientStrengthLoc, 0.2f);
-    glUniform1f(diffuseStrengthLoc, 0.7f);/**/
+    glUniform1f(diffuseStrengthLoc, 0.7f);
 }
 
 void WorldManager::Draw()
@@ -358,13 +356,16 @@ void  WorldManager::DrawEndBanner(sf::RenderWindow *Window)
 {
     Window->clear();
 
- //   rectangle->setPosition(0, 0);
- //   rectangle->setFillColor(sf::Color(sf::Color::White));
+    sf::RectangleShape rectangle;
+    rectangle.setSize(sf::Vector2f(100, 50));
+    rectangle.setPosition(0, 0);
+    rectangle.setFillColor(sf::Color(sf::Color::White));
+    Window->draw(rectangle);
 
     Text.setFont(Font);
     Text.setCharacterSize(36);
     Text.setColor(sf::Color::White);
-    std::string ScoreTxt = "Your socore: " + std::to_string(Score);
+    std::string ScoreTxt = "Your score: " + std::to_string(Score);
     Text.setString(ScoreTxt);
     Text.setPosition(50, 100);
 

@@ -20,7 +20,7 @@ public:
     void SetRotationAngle(float angle);
     void SetPosition(const glm::vec3& position);
     void CreateIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius);
-    void Object::createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength);
+    void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength);
 
     float RotationAngle;
     glm::vec3 Position;
