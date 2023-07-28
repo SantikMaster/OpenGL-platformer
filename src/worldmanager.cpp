@@ -50,7 +50,7 @@ uniform vec3 uLightDirection;  // Added light direction uniform
 uniform float uAmbientStrength;
 uniform float uDiffuseStrength;
 uniform float uRotationAngle;   // Uniform to pass the rotation angle from the CPU
-uniform vec3 uSphereCenter;     // Uniform to pass the center position of the sphere
+uniform vec3 uSphereCenter;     // Uniform to pass the center Position of the sphere
 uniform vec3 uSphereRotation;   // Uniform to pass the axis of rotation for the sphere
 
 void main() {
@@ -100,29 +100,6 @@ void main() {
 
 )";
 
-/*
-const char* FragmentShaderSource_sphere = R"(
-#version 440 core
-
-in vec3 FragNormal;
-in vec3 FragPos;
-
-out vec4 FragColor;
-
-uniform vec3 uLightColor;
-uniform vec3 uLightDirection;
-uniform float uAmbientStrength;
-uniform float uDiffuseStrength;
-
-void main() {
-    vec3 ambient = uAmbientStrength * uLightColor;
-    vec3 lightDir = normalize(uLightDirection);
-    float diff = max(dot(normalize(FragNormal), lightDir), 0.0);
-    vec3 diffuse = uDiffuseStrength * diff * uLightColor;
-
-    FragColor = vec4(ambient + diffuse, 1.0);
-}
-)";*/
 
 const char* VertexShaderSource = R"(
 #version 440 core
@@ -186,92 +163,100 @@ void main()
 )";
 WorldManager::WorldManager()
 {
+    ShaderSphere = std::make_unique<Shader>(VertexShaderSource_sphere, FragmentShaderSource_sphere);
+    ShaderCube = std::make_unique<Shader>(VertexShaderSource, FragmentShaderSource);
 
-    shader = std::make_unique<Shader>(VertexShaderSource_sphere, FragmentShaderSource_sphere);
-    shader2 = std::make_unique<Shader>(VertexShaderSource, FragmentShaderSource);
+    modelLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uModel");
+    viewLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uView");
+    projectionLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uProjection");
+    lightDirLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uLightDirection");
+    lightColorLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uLightColor");
+    ambientStrengthLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uAmbientStrength");
+    diffuseStrengthLoc = glGetUniformLocation(ShaderSphere->getProgramID(), "uDiffuseStrength");
 
-    modelLoc = glGetUniformLocation(shader->getProgramID(), "uModel");
-    viewLoc = glGetUniformLocation(shader->getProgramID(), "uView");
-    projectionLoc = glGetUniformLocation(shader->getProgramID(), "uProjection");
-    lightDirLoc = glGetUniformLocation(shader->getProgramID(), "uLightDirection");
-    lightColorLoc = glGetUniformLocation(shader->getProgramID(), "uLightColor");
-    ambientStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uAmbientStrength");
-    diffuseStrengthLoc = glGetUniformLocation(shader->getProgramID(), "uDiffuseStrength");
+    ShaderSphere->use();
 
-    // Camera setup
+    Sphere = std::make_shared<Object>(50.0f);
 
-    shader->use();
+    Restart();
+}
 
+void WorldManager::Restart()
+{
+    srand(time(0));
+    if (!Font.loadFromFile(myfontFileName))
+    {
+        std::cout << "font not loaded";
+    }
 
-    sphere = std::make_shared<Object>(50.0f);
 
     int i = 0;
     for (i = 0; i < 20; i++)
     {
         std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
-        obj->setPosition(glm::vec3(100.0f*i-400, 0.0f, 0.0f));
-        cube_que.push_back(obj);
+        obj->SetPosition(glm::vec3(100.0f * i - 400, 0.0f, 0.0f));
+        CubeQue.push_back(obj);
     }
 
-    sphere->setPosition(glm::vec3(00.0f, 00.0f, 150.0f));
+    Sphere->SetPosition(glm::vec3(00.0f, 00.0f, 150.0f));
+    Score = 0;
+    EndingGame = false;
+    CubeQue.clear();
 }
 
 void WorldManager::GenerateMap()
 {
-    auto back_element = cube_que.back();
+    auto back_element = CubeQue.back();
 
-   // int RANDMAX = 32767
     int val = 110*::rand() / RAND_MAX;
-    std::cout << val << '\n';
-    std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
+    std::shared_ptr<Object> obj = std::make_shared<Object>(Object::CUBE_EDGE, 1);
 
     if (val < 50)
     {
 
-        obj->setPosition(glm::vec3(back_element->position.x + 100, 0, back_element->position.z));
+        obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z));
     }
     else if (val < 75)
     {
-        if (back_element->position.z > -300)
+        if (back_element->Position.z > MinGroundHeight)
         {
-            obj->setPosition(glm::vec3(back_element->position.x + 100, 0, back_element->position.z-100));
+            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z- Object::CUBE_EDGE));
         }
         else
         {
-            obj->setPosition(glm::vec3(back_element->position.x + 100, 0, -300.0f));
+            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, MinGroundHeight));
         }
     }
     else if (val < 100)
     {
-        if (back_element->position.z < 200)
+        if (back_element->Position.z < MaxGroundHeight)
         {
-            obj->setPosition(glm::vec3(back_element->position.x + 100, 0, back_element->position.z + 100));
+            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z + Object::CUBE_EDGE));
         }
         else
         {
-            obj->setPosition(glm::vec3(back_element->position.x + 100, 0, 200.0f));
+            obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, MaxGroundHeight));
         }
     }
     else 
     {
-        obj->setPosition(glm::vec3(back_element->position.x + 200, 0, back_element->position.z));
+        obj->SetPosition(glm::vec3(back_element->Position.x + 200, 0, back_element->Position.z));
     }
-    cube_que.push_back(obj);
-    cube_que.pop_front();
+    CubeQue.push_back(obj);
+    CubeQue.pop_front();
 
 }
 
 bool WorldManager::Collide(int FutureX, int FutureZ) // 
 {
     bool collide = false;
-    for (auto it = cube_que.begin(); it != cube_que.end(); ++it)
+    for (auto it = CubeQue.begin(); it != CubeQue.end(); ++it)
     {       
-
-        if ((FutureX >= it->get()->position.x - 100) &&
-            (FutureX < it->get()->position.x) )
+        if ((FutureX >= it->get()->Position.x - 100) &&
+            (FutureX < it->get()->Position.x) )
         {
-            if ((FutureZ >= it->get()->position.z) &&
-                (FutureZ < it->get()->position.z + 99))
+            if ((FutureZ >= it->get()->Position.z) &&
+                (FutureZ < it->get()->Position.z + 99))
             {
                 return true;
             }
@@ -279,64 +264,63 @@ bool WorldManager::Collide(int FutureX, int FutureZ) //
     }
 
     return collide;
-
 }
 void WorldManager::SphereJump() // 
 {
-    if (Collide(sphere->position.x, sphere->position.z - 10))
+    if (Collide(Sphere->Position.x, Sphere->Position.z - 10))
         SphereVelocityZ += SpherePushVelocityZ;
 }
 void WorldManager::Update(int sizeX, int sizeY) // 
 {
-    if (timer.getElapsedTime().asMilliseconds() >= 10)
+    if (Timer.getElapsedTime().asMilliseconds() >= 10)
     {
         
-        sphere->setRotationAngle(sphere->rotationAngle + SphereVelocityX);
+        Sphere->SetRotationAngle(Sphere->RotationAngle + SphereVelocityX);
     
-        int TempX = sphere->position.x + SphereVelocityX * 500;
-        int TempZ = sphere->position.z + SphereVelocityZ;
+        int TempX = Sphere->Position.x + SphereVelocityX * 500;
+        int TempZ = Sphere->Position.z + SphereVelocityZ;
 
-        if (!Collide(sphere->position.x, TempZ))
+        if (!Collide(Sphere->Position.x, TempZ))
         {
           
-            sphere->position.z = TempZ;
+            Sphere->Position.z = TempZ;
             SphereVelocityZ -= SpheredeltaVelocityZ;
             IsSphereColliding = false;
         }
         else
         {
             IsSphereColliding = true;
-            std::cout << "helloz\n";
             SphereVelocityZ *= -0.1;
         }
 
-        if (!Collide(TempX, sphere->position.z+10))
+        if (!Collide(TempX, Sphere->Position.z+10))
         {
-            sphere->position.x = TempX;
+            Sphere->Position.x = TempX;
         }
         else
         {
-            std::cout << "hellox\n";
             IsSphereColliding = true;
             SphereVelocityX *= -0.3;
         }
 
-        timer.restart();
+        if (Sphere->Position.z < -500) EndingGame = true;
+
+        Timer.restart();
     }
     if (MapTimer.getElapsedTime().asMilliseconds() >= 700- TimePenalty)
     {
         GenerateMap();
         MapTimer.restart();
         TimePenalty++;
+        Score++;
     }
 
-    //  glm::vec3 lightDirection(0.f, 1.f, 0.f);
-    glm::vec3 cameraPos(-300.0f+ sphere->position.x , -400.0f, 200.f);
-    glm::vec3 cameraTarget(sphere->position.x, 0.f, 0.f);
+    glm::vec3 cameraPos(-300.0f+ Sphere->Position.x , -400.0f, 200.f);
+    glm::vec3 cameraTarget(Sphere->Position.x, 0.f, 0.f);
     glm::vec3 cameraUp(0.f, 0.1f, 0.8f);
 
     viewMatrix = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-    // Update the projection matrix
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, 2000.f);
@@ -352,21 +336,41 @@ void WorldManager::Update(int sizeX, int sizeY) //
     glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
 
     glUniform1f(ambientStrengthLoc, 0.2f);
-    glUniform1f(diffuseStrengthLoc, 0.7f);
+    glUniform1f(diffuseStrengthLoc, 0.7f);/**/
 }
 
 void WorldManager::Draw()
 {
-    shader->use();
+    ShaderSphere->use();
 
-    sphere->render(shader.get());
+    Sphere->Render(ShaderSphere.get());
 
-    shader2->use();
-    shader->setMat4("uView", viewMatrix);
-    shader->setMat4("uProjection", projectionMatrix);
+    ShaderCube->use();
+    ShaderSphere->setMat4("uView", viewMatrix);
+    ShaderSphere->setMat4("uProjection", projectionMatrix);
 
-    for (auto i = cube_que.begin(); i != cube_que.end(); i++)
+    for (auto i = CubeQue.begin(); i != CubeQue.end(); i++)
     {
-        i->get()->render(shader.get());
+        i->get()->Render(ShaderSphere.get());
     }
+}
+void  WorldManager::DrawEndBanner(sf::RenderWindow *Window)
+{
+    Window->clear();
+
+ //   rectangle->setPosition(0, 0);
+ //   rectangle->setFillColor(sf::Color(sf::Color::White));
+
+    Text.setFont(Font);
+    Text.setCharacterSize(36);
+    Text.setColor(sf::Color::White);
+    std::string ScoreTxt = "Your socore: " + std::to_string(Score);
+    Text.setString(ScoreTxt);
+    Text.setPosition(50, 100);
+
+    Window->draw(Text);
+    ScoreTxt = "Press SPACE to restart";
+    Text.setString(ScoreTxt);
+    Text.setPosition(50, 200);
+    Window->draw(Text);
 }

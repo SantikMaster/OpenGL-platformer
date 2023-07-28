@@ -6,24 +6,24 @@
 #include "shader.h"
 #include "vertex.h"
 
-//class Vertex;
 class Object;
-//class Shader;
+
 
 class Object
 {
 public:
-    const int SPHERE_SUBDIVISIONS = 3; // Increase for higher resolution spheres
-    Object(float radius = 50.0f, bool shapeType = false);
-    void render(Shader* shader);
+    const static int CUBE_EDGE = 100;
 
-    void setRotationAngle(float angle);
-    void setPosition(const glm::vec3& position);
-    void createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius);
+    Object(float radius = 50.0f, bool shapeType = false);
+    void Render(Shader* shader);
+
+    void SetRotationAngle(float angle);
+    void SetPosition(const glm::vec3& position);
+    void CreateIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius);
     void Object::createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength);
 
-    float rotationAngle;
-    glm::vec3 position;
+    float RotationAngle;
+    glm::vec3 Position;
     bool ShapeType = 0;
 private:
     std::vector<Vertex> vertices;
@@ -31,5 +31,7 @@ private:
     std::vector<unsigned int> indices;
     GLuint VBO, EBO;
     glm::mat4 modelMatrix;
+
+    const int SPHERE_SUBDIVISIONS = 3; // Increase for higher resolution spheres
 };
 

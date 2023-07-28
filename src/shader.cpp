@@ -14,8 +14,6 @@ Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
     GLuint vertexShader, fragmentShader;
     GLenum error;
 
-
-
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
     glCompileShader(vertexShader);
@@ -49,8 +47,6 @@ Shader::Shader(const char* vertexShaderSource, const char* fragmentShaderSource)
 Shader::~Shader()
 {
     glDeleteProgram(programID);
-    // Check for shader program linking status (omitted for brevity)
-
 }
 
 void Shader::use()

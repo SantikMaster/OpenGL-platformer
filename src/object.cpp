@@ -11,22 +11,22 @@
 #include <iostream>
 
 
-void Object::setRotationAngle(float angle)
+void Object::SetRotationAngle(float angle)
 {
-    rotationAngle = angle;
+    RotationAngle = angle;
 }
 
-void Object::setPosition(const glm::vec3& pos)
+void Object::SetPosition(const glm::vec3& pos)
 {
-    position = pos;
+    Position = pos;
 }
 
 Object::Object(float radius, bool shapeType)
 {
     ShapeType = shapeType;
     modelMatrix = glm::mat4(1.0f);
-    rotationAngle = 0;
-    position = glm::vec3(0, 0, 0);
+    RotationAngle = 0;
+    Position = glm::vec3(0, 0, 0);
 
     if (shapeType == 0)
         createIcosphere(vertices, indices, SPHERE_SUBDIVISIONS, radius);
@@ -50,16 +50,16 @@ Object::Object(float radius, bool shapeType)
 
 }
 
-void Object::render(Shader* shader)
+void Object::Render(Shader* shader)
 {
     modelMatrix = glm::mat4(1.0f);
 
     if (ShapeType == 1)
-        modelMatrix = glm::translate(modelMatrix, position); // Apply translation if needed
+        modelMatrix = glm::translate(modelMatrix, Position); // Apply translation if needed
     else
-        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, position.y, position.z));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0, Position.y, Position.z));
    
-    modelMatrix = glm::rotate(modelMatrix, rotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
+    modelMatrix = glm::rotate(modelMatrix, RotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -78,11 +78,11 @@ void Object::render(Shader* shader)
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), rotationAngle);
+    glUniform1f(glGetUniformLocation(shader->getProgramID(), "uRotationAngle"), RotationAngle);
     if (ShapeType == 1)
-        glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(position));
+        glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(Position));
     else
-    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(glm::vec3(0, position.y, position.z)));
+    glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereCenter"), 1, glm::value_ptr(glm::vec3(0, Position.y, Position.z)));
     glUniform3fv(glGetUniformLocation(shader->getProgramID(), "uSphereRotation"), 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, +10.0f)));
 
     glEnableVertexAttribArray(0);
@@ -96,7 +96,7 @@ void Object::render(Shader* shader)
     glDisable(GL_BLEND);
 }
 
-void Object::createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength)
+void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, float sideLength)
 {
     // Vertices for a cube
     vertices = {
@@ -154,7 +154,7 @@ void Object::createCube(std::vector<Vertex>& vertices, std::vector<unsigned int>
     // Normalize the vertices
 }
 
-void Object::createIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius)
+void Object::CreateIcosphere(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, int recursionLevel, float radius)
 {
     // Create an icosahedron
     const float t = (1.0f + std::sqrt(5.0f)) / 2.0f;

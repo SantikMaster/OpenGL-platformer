@@ -26,8 +26,8 @@ Engine::Engine()
 
 void Engine::Init()
 {
-    settings.depthBits = 24; // Set the depth buffer bits to 24
-    settings.majorVersion = 4; // Request OpenGL 3.0 or above
+    settings.depthBits = 24; 
+    settings.majorVersion = 4; 
     settings.minorVersion = 4;
 
     Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(800, 600, 32), "SFML OpenGL", sf::Style::Default, settings);
@@ -42,9 +42,7 @@ void Engine::Init()
         std::cerr << "OpenGL 3.3 is not supported by your graphics card or driver." << std::endl;
     }
 
-    // OpenGL setup
     glClearDepth(1.f);
-    glClearColor(0.3f, 0.3f, 0.3f, 0.f);
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
 
@@ -63,7 +61,6 @@ void Engine::ProcessEvents()
     sf::Event Event;
     while (Window->pollEvent(Event))
     {
-      //  if(Event.KeyPressed  )
         if (Event.type == sf::Event::Closed)
             Window->close();
 
@@ -94,6 +91,10 @@ void Engine::ProcessEvents()
                 World->SphereJump();
                 
                 timer.restart();
+                if (World->EndingGame)
+                {
+                    World->Restart();
+                }
             }
         }
     }
@@ -107,9 +108,26 @@ void Engine::Run()
         ProcessEvents();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if (!World->EndingGame)
+        {
+            Update();       
+            World->Draw();
+        }
+        else
+        {     
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        Update();
-        World->Draw();
+            glBindVertexArray(0);
+            glUseProgram(0);
+
+            // Disable vertex attribute arrays
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);/* */
+
+            World->DrawEndBanner(Window.get());
+        }
+
         Window->display();
     }
 }
