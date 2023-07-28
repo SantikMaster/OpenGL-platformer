@@ -184,9 +184,13 @@ WorldManager::WorldManager()
 void WorldManager::Restart()
 {
     srand(time(0));
-    if (Font.loadFromFile(myfontFileName))
+    if (!Font.loadFromFile(myfontFileName))
     {
-        std::cout << "font loaded";
+        std::cout << "font not loaded\n";
+    }
+    if (!backgroundImage.loadFromFile(myImageFileName))
+    {
+        std::cout << "Image not loaded\n";
     }
 
     CubeQue.clear();
@@ -356,12 +360,6 @@ void  WorldManager::DrawEndBanner(sf::RenderWindow *Window)
 {
     Window->clear();
 
-    sf::RectangleShape rectangle;
-    rectangle.setSize(sf::Vector2f(100, 50));
-    rectangle.setPosition(0, 0);
-    rectangle.setFillColor(sf::Color(sf::Color::White));
-    Window->draw(rectangle);
-
     Text.setFont(Font);
     Text.setCharacterSize(36);
     Text.setColor(sf::Color::White);
@@ -374,4 +372,8 @@ void  WorldManager::DrawEndBanner(sf::RenderWindow *Window)
     Text.setString(ScoreTxt);
     Text.setPosition(50, 200);
     Window->draw(Text);
+}
+void WorldManager::DrawBackground(sf::RenderWindow* Window)
+{
+
 }

@@ -44,14 +44,17 @@ public:
     bool IsSphereColliding = false;
 
     std::string myfontFileName = "../Textures/Arial.ttf";
+    std::string myImageFileName = "../Textures/Background.jpg";
     sf::Font Font;
     sf::Text Text;
+    sf::Image backgroundImage;
   //  std::unique_ptr<sf::RectangleShape> rectangle;
 
     void GenerateMap();
     void SphereJump();
     bool Collide(int FutureX, int FutureZ);
     void DrawEndBanner(sf::RenderWindow *Window);
+    void DrawBackground(sf::RenderWindow* Window);
     void Restart();
 
     std::shared_ptr<Object> Sphere;

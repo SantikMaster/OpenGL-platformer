@@ -110,15 +110,30 @@ void Engine::Run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         if (!World->EndingGame)
         {
+/*            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+            glBindVertexArray(0);
+            glDisableVertexAttribArray(0);
+            glUseProgram(0);
+            glDisableVertexAttribArray(1);
+
+            Window->setActive(false);
+            World->DrawBackground(Window.get());
+            glClearDepth(1.f);
+            glEnable(GL_DEPTH_TEST);
+            glDepthMask(GL_TRUE);*/
+
+       //     Window->setActive(true);  
+            World->DrawBackground(Window.get());
             Update();       
             World->Draw();
+          
         }
         else
         {     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            static int PG = 0;
-
             glBindVertexArray(0);
             glDisableVertexAttribArray(0);
             glUseProgram(0);
