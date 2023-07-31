@@ -30,17 +30,6 @@ public:
     bool EndingGame = false;
     const int MaxGroundHeight = 200;
     const int MinGroundHeight = -300;
-
-    float SphereVelocityX = 0;
-    float SpheredeltaVelocityX = 0.002;
-
-    float SphereVelocityZ = 0;
-    float SpherePushVelocityZ = 5;
-    float SpheredeltaVelocityZ = 0.05;
-
-    int GroundHeight;
-    int Score = 0;
-
     const int AmountOfStartCubes = 20;
     const int YOutOfScreen = -500;
     const int StartSpeed = 700;
@@ -48,6 +37,17 @@ public:
     const float ReflectionZVelocityMultimplier = 0.1;
     const float ReflectionXVelocityMultimplier = -0.3;
     const int DistanceToTexture = 10;
+
+    float SphereVelocityX = 0;
+    float SpheredeltaVelocityX = 0.002;
+    float SphereVelocityZ = 0;
+    float SpherePushVelocityZ = 5;
+    float SpheredeltaVelocityZ = 0.05;
+
+    int GroundHeight;
+    int Score = 0;
+
+
 
     int TimePenalty = 0;
     bool IsSphereColliding = false;

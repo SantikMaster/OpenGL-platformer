@@ -184,6 +184,9 @@ WorldManager::WorldManager()
 
 void WorldManager::Restart()
 {
+    SphereVelocityX = 0;
+    SphereVelocityZ = 0;
+
     srand(time(0));
     if (!Font.loadFromFile(myfontFileName))
     {
@@ -326,8 +329,6 @@ void WorldManager::Update(int sizeX, int sizeY)
         TimePenalty++;
         Score++;
     }
-
-
 
     glm::vec3 cameraPos(CameraStartPosX + Sphere->Position.x , CameraStartPosY, CameraStartPosZ);
     glm::vec3 cameraTarget(Sphere->Position.x, 0.f, 0.f);
