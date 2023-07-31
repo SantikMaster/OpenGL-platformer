@@ -6,9 +6,13 @@ This is a platformer that uses OpenGL and SFML. The ball is bouncing among the c
 # Installation 
 
 $git clone https://github.com/SantikMaster/OpenGL-platformer.git
+
 $cd OpenGL-platformer
+
 $mkdir build
+
 $cd build
+
 $cmake ..
 
 # Description
