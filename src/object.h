@@ -13,6 +13,7 @@ class Object
 {
 public:
     const static int CUBE_EDGE = 100;
+    const static int SPHERE_RADIUS = 50;
 
     Object(float radius = 50.0f, bool shapeType = false);
     void Render(Shader* shader);

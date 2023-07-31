@@ -60,11 +60,9 @@ void Object::Render(Shader* shader)
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0, Position.y, Position.z));
    
     modelMatrix = glm::rotate(modelMatrix, RotationAngle, glm::vec3(0.0f, -1.0f, 0.0f));
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-   glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
-    //   glEnable(GL_CULL_FACE);
     glDisable(GL_CULL_FACE);
  
 
@@ -109,7 +107,7 @@ void Object::CreateCube(std::vector<Vertex>& vertices, std::vector<unsigned int>
        {-sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, -sideLength / 2, -sideLength / 2},
         {sideLength / 2, sideLength / 2, -sideLength / 2},
-        {-sideLength / 2, sideLength / 2, -sideLength / 2},/**/
+        {-sideLength / 2, sideLength / 2, -sideLength / 2},
 
         // Left face
         {-sideLength / 2, -sideLength / 2, -sideLength / 2},

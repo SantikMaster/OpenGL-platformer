@@ -29,7 +29,10 @@ void Engine::Init()
     settings.majorVersion = 4; 
     settings.minorVersion = 4;
 
-    Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(800, 600, 32), "SFML OpenGL", sf::Style::Default, settings);
+    int StartHeight = 600;
+    int StartWidth = 800;
+
+    Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(StartWidth, StartHeight), "Ball Platformer SFML OpenGL", sf::Style::Default, settings);
 
     GLenum glewInitResult = glewInit();
     if (glewInitResult != GLEW_OK) {

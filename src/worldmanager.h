@@ -37,8 +37,17 @@ public:
     float SphereVelocityZ = 0;
     float SpherePushVelocityZ = 5;
     float SpheredeltaVelocityZ = 0.05;
-    int GroundHeight = 100;
+
+    int GroundHeight;
     int Score = 0;
+
+    const int AmountOfStartCubes = 20;
+    const int YOutOfScreen = -500;
+    const int StartSpeed = 700;
+    const int DeltaTimeMS = 10;
+    const float ReflectionZVelocityMultimplier = 0.1;
+    const float ReflectionXVelocityMultimplier = -0.3;
+    const int DistanceToTexture = 10;
 
     int TimePenalty = 0;
     bool IsSphereColliding = false;

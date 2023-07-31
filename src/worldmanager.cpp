@@ -163,6 +163,7 @@ void main()
 )";
 WorldManager::WorldManager()
 {
+    GroundHeight = Object::CUBE_EDGE;
     ShaderSphere = std::make_unique<Shader>(VertexShaderSource_sphere, FragmentShaderSource_sphere);
     ShaderCube = std::make_unique<Shader>(VertexShaderSource, FragmentShaderSource);
 
@@ -176,7 +177,7 @@ WorldManager::WorldManager()
 
     ShaderSphere->use();
 
-    Sphere = std::make_shared<Object>(50.0f);
+    Sphere = std::make_shared<Object>(Object::SPHERE_RADIUS);
 
     Restart();
 }
@@ -195,14 +196,14 @@ void WorldManager::Restart()
 
     CubeQue.clear();
     int i = 0;
-    for (i = 0; i < 20; i++)
+    for (i = 0; i < AmountOfStartCubes; i++)
     {
-        std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
-        obj->SetPosition(glm::vec3(100.0f * i - 400, 0.0f, 0.0f));
+        std::shared_ptr<Object> obj = std::make_shared<Object>(Object::CUBE_EDGE, 1);
+        obj->SetPosition(glm::vec3(Object::CUBE_EDGE * i - Object::CUBE_EDGE * AmountOfStartCubes/2, 0.0f, 0.0f));
         CubeQue.push_back(obj);
     }
 
-    Sphere->SetPosition(glm::vec3(00.0f, 00.0f, 150.0f));
+    Sphere->SetPosition(glm::vec3(00.0f, 00.0f, Object::CUBE_EDGE + Object::CUBE_EDGE));
     Score = 0;
     EndingGame = false;
 }
@@ -211,15 +212,19 @@ void WorldManager::GenerateMap()
 {
     auto back_element = CubeQue.back();
 
-    int val = 110*::rand() / RAND_MAX;
-    std::shared_ptr<Object> obj = std::make_shared<Object>(100.0f, 1);
+    const float ProbapilityFlat = 0.5;
+    const float ProbapilityStepUp = 0.2;
+    const float ProbapilityStepDown = 0.2;
 
-    if (val < 50)
+
+    float val = (float)rand() / RAND_MAX;
+    std::shared_ptr<Object> obj = std::make_shared<Object>(Object::CUBE_EDGE, 1);
+
+    if (val < ProbapilityFlat)
     {
-
         obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, back_element->Position.z));
     }
-    else if (val < 75)
+    else if (val < ProbapilityFlat+ProbapilityStepUp)
     {
         if (back_element->Position.z > MinGroundHeight)
         {
@@ -230,7 +235,7 @@ void WorldManager::GenerateMap()
             obj->SetPosition(glm::vec3(back_element->Position.x + Object::CUBE_EDGE, 0, MinGroundHeight));
         }
     }
-    else if (val < 100)
+    else if (val < ProbapilityFlat + ProbapilityStepUp + ProbapilityStepDown)
     {
         if (back_element->Position.z < MaxGroundHeight)
         {
@@ -243,22 +248,22 @@ void WorldManager::GenerateMap()
     }
     else
     {
-        obj->SetPosition(glm::vec3(back_element->Position.x + 200, 0, back_element->Position.z));
+        obj->SetPosition(glm::vec3(back_element->Position.x + 2*Object::CUBE_EDGE, 0, back_element->Position.z)); //Makeing a hole in the ground
     }
     CubeQue.push_back(obj);
     CubeQue.pop_front();
 }
 
-bool WorldManager::Collide(int FutureX, int FutureZ) // 
+bool WorldManager::Collide(int FutureX, int FutureZ) 
 {
     bool collide = false;
     for (auto it = CubeQue.begin(); it != CubeQue.end(); ++it)
     {       
-        if ((FutureX >= it->get()->Position.x - 100) &&
+        if ((FutureX >= it->get()->Position.x - Object::CUBE_EDGE) &&
             (FutureX < it->get()->Position.x) )
         {
             if ((FutureZ >= it->get()->Position.z) &&
-                (FutureZ < it->get()->Position.z + 99))
+                (FutureZ < it->get()->Position.z + Object::CUBE_EDGE - 1))
             {
                 return true;
             }
@@ -267,14 +272,19 @@ bool WorldManager::Collide(int FutureX, int FutureZ) //
 
     return collide;
 }
-void WorldManager::SphereJump() // 
+void WorldManager::SphereJump()
 {
-    if (Collide(Sphere->Position.x, Sphere->Position.z - 10))
+    if (Collide(Sphere->Position.x, Sphere->Position.z - DistanceToTexture))
         SphereVelocityZ += SpherePushVelocityZ;
 }
-void WorldManager::Update(int sizeX, int sizeY) // 
+void WorldManager::Update(int sizeX, int sizeY) 
 {
-    if (Timer.getElapsedTime().asMilliseconds() >= 10)
+    float CameraStartPosX = -300;
+    float CameraStartPosY = -400;
+    float CameraStartPosZ = 200;
+    float HowFar = 2000.f;
+
+    if (Timer.getElapsedTime().asMilliseconds() >= DeltaTimeMS)
     {
         
         Sphere->SetRotationAngle(Sphere->RotationAngle + SphereVelocityX);
@@ -292,24 +302,24 @@ void WorldManager::Update(int sizeX, int sizeY) //
         else
         {
             IsSphereColliding = true;
-            SphereVelocityZ *= -0.1;
+            SphereVelocityZ *= ReflectionZVelocityMultimplier;
         }
 
-        if (!Collide(TempX, Sphere->Position.z+10))
+        if (!Collide(TempX, Sphere->Position.z + DistanceToTexture))
         {
             Sphere->Position.x = TempX;
         }
         else
         {
             IsSphereColliding = true;
-            SphereVelocityX *= -0.3;
+            SphereVelocityX *= ReflectionXVelocityMultimplier;
         }
 
-        if (Sphere->Position.z < -500) EndingGame = true;
+        if (Sphere->Position.z < YOutOfScreen) EndingGame = true;
 
         Timer.restart();
     }
-    if (MapTimer.getElapsedTime().asMilliseconds() >= 700- TimePenalty)
+    if (MapTimer.getElapsedTime().asMilliseconds() >= StartSpeed - TimePenalty)
     {
         GenerateMap();
         MapTimer.restart();
@@ -317,7 +327,9 @@ void WorldManager::Update(int sizeX, int sizeY) //
         Score++;
     }
 
-    glm::vec3 cameraPos(-300.0f+ Sphere->Position.x , -400.0f, 200.f);
+
+
+    glm::vec3 cameraPos(CameraStartPosX + Sphere->Position.x , CameraStartPosY, CameraStartPosZ);
     glm::vec3 cameraTarget(Sphere->Position.x, 0.f, 0.f);
     glm::vec3 cameraUp(0.f, 0.1f, 0.8f);
 
@@ -325,7 +337,7 @@ void WorldManager::Update(int sizeX, int sizeY) //
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, 2000.f);
+    projectionMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(sizeX) / sizeY, 1.f, HowFar);
     glLoadMatrixf(glm::value_ptr(projectionMatrix));
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
@@ -360,17 +372,22 @@ void  WorldManager::DrawEndBanner(sf::RenderWindow *Window)
 {
     Window->clear();
 
+    int ScorePositionX = 50;
+    int ScorePositionY = 100;
+    int RestartPositionX = 50;
+    int RestartPositionY = 200;
+
     Text.setFont(Font);
     Text.setCharacterSize(36);
     Text.setColor(sf::Color::White);
-    std::string ScoreTxt = "Your score: " + std::to_string(Score);
-    Text.setString(ScoreTxt);
-    Text.setPosition(50, 100);
+    std::string Str = "Your score: " + std::to_string(Score);
+    Text.setString(Str);
+    Text.setPosition(ScorePositionX, ScorePositionY);
 
     Window->draw(Text);
-    ScoreTxt = "Press SPACE to restart";
-    Text.setString(ScoreTxt);
-    Text.setPosition(50, 200);
+    Str = "Press SPACE to restart";
+    Text.setString(Str);
+    Text.setPosition(RestartPositionX, RestartPositionY);
     Window->draw(Text);
 }
 void WorldManager::DrawBackground(sf::RenderWindow* Window)
